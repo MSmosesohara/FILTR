@@ -1,53 +1,62 @@
-# ncurses Log Viewer
+# FILTR
+![FILTR Logo](/images/filtr.png)
 
-## Overview
-The ncurses Log Viewer is a terminal-based application that allows users to monitor and filter log output in real-time. It features two panels: the first panel displays filtered log information using `grep`, while the second panel allows users to highlight specific log entries, which are then excluded from the first panel's output.
+**FILTR**  is a real-time log filtering tool with a dual-panel ncurses interface.  
+It helps you monitor and interactively filter system logs, making it easier to focus on what matters.
 
 ## Features
-- Real-time log monitoring from the `logs` command.
-- Two-panel interface:
-  - **Panel 1**: Displays log output filtered by `grep`.
-  - **Panel 2**: Allows users to highlight specific log entries.
-- Dynamic updating of both panels based on user input.
 
-## Installation
-To build the project, ensure you have the necessary development tools installed, including `gcc` and `ncurses` library. You can install the `ncurses` library using your package manager. For example, on Ubuntu, you can run:
+- **Dual-panel interface:**  
+  - **Top panel:** Shows a live stream of logs, excluding lines matching your highlighted patterns.
+  - **Bottom panel:** Shows all logs and lets you highlight lines to exclude from the top panel.
+- **Interactive highlighting:**  
+  - Press `h` to highlight the last line in the bottom panel (adds it to the exclusion filter).
+  - Press `q` to quit.
+- **Dynamic filtering:**  
+  - Highlights are used to build a dynamic `grep` command with `-v -e` for each pattern, excluding those lines from the top panel in real time.
 
-```bash
-sudo apt-get install libncurses5-dev libncursesw5-dev
-```
+## Usage
 
-Clone the repository and navigate to the project directory:
+1. **Build the application:**
+    ```sh
+    make
+    ```
+2. **Run FILTR (you may need sudo for log access):**
+    ```sh
+    sudo ./filtr
+    ```
+3. **Controls:**
+    - `h`: Highlight the last line in the bottom panel (exclude from top panel)
+    - `q`: Quit the application
 
-```bash
-git clone <repository-url>
-cd ncurses-log-viewer
-```
+## How it Works
 
-## Build Instructions
-To compile the application, run the following command in the project directory:
+- FILTR tails your system logs (`/var/log/*.log` and `/var/log/*/*.log`).
+- The bottom panel shows all log lines.
+- When you highlight a line, FILTR adds it to a list of patterns and rebuilds the top panel’s filter to exclude those patterns using `grep -v -e`.
+- The top panel always shows the filtered log stream.
 
-```bash
+## Requirements
+
+- Linux (tested on Ubuntu)
+- ncurses library
+- gcc
+
+## Building
+
+```sh
 make
 ```
 
-This will generate the executable file for the ncurses Log Viewer.
+## Customization
 
-## Usage
-To run the application, execute the following command:
-
-```bash
-./ncurses-log-viewer
-```
-
-The application will start displaying log output. Use the controls in the second panel to highlight specific entries, which will be excluded from the first panel's display.
-
-## Dependencies
-- `gcc` (GNU Compiler Collection)
-- `ncurses` library
-
-## Contributing
-Contributions are welcome! Please feel free to submit a pull request or open an issue for any enhancements or bug fixes.
+- You can change which logs are tailed by editing the command in `main.c`.
+- Highlight matching can be improved by editing the pattern extraction logic.
 
 ## License
-This project is licensed under the MIT License. See the LICENSE file for more details.
+
+MIT License
+
+---
+
+*FILTR — Focus on what matters in your logs.*
