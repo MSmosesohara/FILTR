@@ -66,54 +66,12 @@ PANEL* create_right_panel() {
 }
 
 void update_right_panel(PANEL *panel, const char *new_log) {
-    static char *log_lines[MAX_LOG_LINES];
-    static int log_line_count = 0;
-    static int initialized = 0;
-
-    if (!initialized) {
-        for (int i = 0; i < MAX_LOG_LINES; i++) {
-            log_lines[i] = malloc(LOG_LINE_LENGTH);
-            if (!log_lines[i]) {
-                // Handle malloc failure
-                for (int j = 0; j < i; j++) free(log_lines[j]);
-                return;
-            }
-            log_lines[i][0] = '\0';
-        }
-        initialized = 1;
-    }
-
-    // Defensive: check panel and window
-    if (!panel) return;
     WINDOW *win = panel_window(panel);
     if (!win) return;
-
-    // Add the new log line to the buffer
-    if (log_line_count < MAX_LOG_LINES) {
-        strncpy(log_lines[log_line_count], new_log, LOG_LINE_LENGTH - 1);
-        log_lines[log_line_count][LOG_LINE_LENGTH - 1] = '\0';
-        log_line_count++;
-    } else {
-        // Shift up to make room for the new line
-        for (int i = 1; i < MAX_LOG_LINES; i++) {
-            strncpy(log_lines[i - 1], log_lines[i], LOG_LINE_LENGTH);
-        }
-        strncpy(log_lines[MAX_LOG_LINES - 1], new_log, LOG_LINE_LENGTH - 1);
-        log_lines[MAX_LOG_LINES - 1][LOG_LINE_LENGTH - 1] = '\0';
-    }
-
-    werase(win);
-
-    int max_y, max_x;
-    getmaxyx(win, max_y, max_x);
-    if (max_y <= 0 || max_x <= 0) return;
-
-    // Show only the last max_y lines
-    int start = (log_line_count > max_y) ? (log_line_count - max_y) : 0;
-    for (int i = 0; i < max_y && (start + i) < log_line_count; i++) {
-        mvwprintw(win, i, 0, "%.*s", max_x - 1, log_lines[start + i]);
-    }
-
-    box(win, 0, 0); // Optional: draw a border
+    // Print line at the bottom, scroll up
+    int maxy, maxx;
+    getmaxyx(win, maxy, maxx);
+    scroll(win);
+    mvwprintw(win, maxy - 2, 0, "%.*s", maxx - 1, new_log);
     wrefresh(win);
 }

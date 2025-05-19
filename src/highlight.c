@@ -1,60 +1,73 @@
 #include "highlight.h"
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
-#define MAX_HIGHLIGHTS 100
+#define MAX_HIGHLIGHTS 128
+#define MAX_PATTERN_LEN 256
 
-static char *highlights[MAX_HIGHLIGHTS];
+static char highlights[MAX_HIGHLIGHTS][MAX_PATTERN_LEN];
 static int highlight_count = 0;
 
+void init_highlight() {
+    highlight_count = 0;
+}
+
 void add_highlight(const char *highlight) {
-    if (highlight_count < MAX_HIGHLIGHTS) {
-        highlights[highlight_count] = strdup(highlight);
+    if (highlight_count < MAX_HIGHLIGHTS && strlen(highlight) < MAX_PATTERN_LEN) {
+        strncpy(highlights[highlight_count], highlight, MAX_PATTERN_LEN - 1);
+        highlights[highlight_count][MAX_PATTERN_LEN - 1] = '\0';
         highlight_count++;
     }
 }
 
 void remove_highlight(const char *highlight) {
-    for (int i = 0; i < highlight_count; i++) {
+    for (int i = 0; i < highlight_count; ++i) {
         if (strcmp(highlights[i], highlight) == 0) {
-            free(highlights[i]);
-            highlights[i] = highlights[highlight_count - 1];
-            highlights[highlight_count - 1] = NULL;
+            for (int j = i; j < highlight_count - 1; ++j) {
+                strcpy(highlights[j], highlights[j + 1]);
+            }
             highlight_count--;
             break;
         }
     }
 }
 
-char *get_grep_exclude_command() {
-    if (highlight_count == 0) {
-        return NULL;
+const char **get_highlights(int *count) {
+    *count = highlight_count;
+    static const char *ptrs[MAX_HIGHLIGHTS];
+    for (int i = 0; i < highlight_count; ++i) {
+        ptrs[i] = highlights[i];
     }
-
-    size_t command_length = 0;
-    for (int i = 0; i < highlight_count; i++) {
-        command_length += strlen(highlights[i]) + 4; // for -e and quotes
-    }
-
-    char *command = malloc(command_length + 1);
-    if (!command) {
-        return NULL;
-    }
-
-    command[0] = '\0';
-    for (int i = 0; i < highlight_count; i++) {
-        strcat(command, " -v -e '");
-        strcat(command, highlights[i]);
-        strcat(command, "'");
-    }
-
-    return command;
+    return ptrs;
 }
 
 void clear_highlights() {
-    for (int i = 0; i < highlight_count; i++) {
-        free(highlights[i]);
-        highlights[i] = NULL;
-    }
     highlight_count = 0;
+}
+
+char *get_grep_exclude_command(void) {
+    // Returns a malloc'd string, caller must free
+    if (highlight_count == 0) {
+        return strdup("");
+    }
+    size_t total = 0;
+    for (int i = 0; i < highlight_count; ++i) {
+        total += strlen(highlights[i]) + 10;
+    }
+    char *cmd = malloc(total + 1);
+    if (!cmd) return NULL;
+    cmd[0] = '\0';
+    for (int i = 0; i < highlight_count; ++i) {
+        strcat(cmd, "-v -e '");
+        strcat(cmd, highlights[i]);
+        strcat(cmd, "' ");
+    }
+    return cmd;
+}
+
+void update_grep_command(char *grep_command, size_t size) {
+    char *exclude_cmd = get_grep_exclude_command();
+    snprintf(grep_command, size, "sudo tail -f /var/log/*.log /var/log/*/*.log | grep %s", exclude_cmd);
+    free(exclude_cmd);
 }

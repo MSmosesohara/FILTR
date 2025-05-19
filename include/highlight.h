@@ -6,6 +6,9 @@
 // Function to initialize highlighting
 void init_highlight();
 
+char *get_grep_exclude_command(void);
+
+
 // Function to add a highlight to the list
 void add_highlight(const char *highlight);
 

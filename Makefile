@@ -3,7 +3,7 @@ CFLAGS = -Iinclude
 LDFLAGS = -lncurses -lpanel
 SRC = src/main.c src/panel_left.c src/panel_right.c src/highlight.c src/utils.c
 OBJ = $(SRC:.c=.o)
-TARGET = ncurses-log-viewer
+TARGET = filtr
 
 all: $(TARGET)
 
